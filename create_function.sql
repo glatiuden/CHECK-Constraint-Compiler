@@ -1,9 +1,11 @@
--- DROP FUNCTION IF EXISTS add_constraint(text, text, text, text);
+-- DROP FUNCTION IF EXISTS public.add_constraint(text, text, text, text, text, text, text, text, text);
 -- DROP FUNCTION IF EXISTS validate_query(text);
 -- DROP FUNCTION IF EXISTS validate_table_name(text);
+-- DROP FUNCTION IF EXISTS validate_exists_arg(text);
 
 CREATE OR REPLACE FUNCTION validate_table_name(tbl_name text)
-RETURNS BOOLEAN
+	RETURNS BOOLEAN
+	LANGUAGE PLPGSQL
 AS $$
 BEGIN 
     IF EXISTS (SELECT * 
@@ -14,11 +16,11 @@ BEGIN
         RETURN FALSE;
     END IF;
 END
-$$
-LANGUAGE PLPGSQL;
+$$;
 
 CREATE OR REPLACE FUNCTION validate_query(query text)
-RETURNS BOOLEAN
+	RETURNS BOOLEAN
+	LANGUAGE plpgsql
 AS $$
 BEGIN
 	EXECUTE query;
@@ -26,11 +28,11 @@ BEGIN
 	EXCEPTION WHEN others THEN 
         RETURN FALSE;
 END
-$$
-LANGUAGE plpgsql;
+$$;
 
 CREATE OR REPLACE FUNCTION validate_exists_arg(exists_arg text)
-RETURNS BOOLEAN
+	RETURNS BOOLEAN
+	LANGUAGE plpgsql
 AS $$
 BEGIN
 	IF exists_arg ILIKE 'EXISTS' OR exists_arg ILIKE 'NOT EXISTS' THEN
@@ -39,8 +41,7 @@ BEGIN
 		RETURN FALSE;
 	END IF;
 END
-$$
-LANGUAGE plpgsql;
+$$;
 
 CREATE OR REPLACE FUNCTION add_constraint(
 	trg_name text, 
@@ -52,53 +53,56 @@ CREATE OR REPLACE FUNCTION add_constraint(
 	timing_arg text,
 	tbl_name text, 
 	error_msg text) 
-RETURNS BOOLEAN 
+	RETURNS BOOLEAN 
+	LANGUAGE PLPGSQL
 AS $BODY$
+DECLARE
+	table_name_list constant text[] := regexp_split_to_array('customers, downloads', E'[,]{1}[\\s]?');
 BEGIN
-	ASSERT validate_table_name(tbl_name), FORMAT('Table name "%s" does not exists!', tbl_name);
-    ASSERT validate_query(trg_cond), 'Invalid condition entered, make sure it is a valid SQL query!';
 	ASSERT validate_exists_arg(exists_arg), FORMAT('"%s" is not a valid argument, either input "EXISTS" or "NOT EXISTS" (case insensitive)', exists_arg);
+	ASSERT validate_query(trg_cond), 'Invalid condition entered, make sure it is a valid SQL query!';
 
 	EXECUTE FORMAT(
 	'
 		CREATE OR REPLACE FUNCTION t_%s()
 		RETURNS TRIGGER 
-        AS $$
+		AS $$
 		BEGIN
-		   	IF EXISTS (%s) THEN 
-		   		RAISE EXCEPTION ''%s'';
+			IF EXISTS (%s) THEN 
+				RAISE EXCEPTION ''%s'';
 			END IF;
-            RETURN NULL;
+			RETURN NULL;
 		END;
 		$$ 
-        LANGUAGE plpgsql;
+		LANGUAGE plpgsql;
 	',
 	trg_name,
 	trg_cond,
-    error_msg
+	error_msg
 	);
-	
-	
-	EXECUTE FORMAT(
-	'
-        DROP TRIGGER IF EXISTS t_%s_%s ON %s;
+		
+		
+	FOR counter IN ARRAY_LOWER(table_name_list, 1)..ARRAY_UPPER(table_name_list, 1) LOOP
+		ASSERT validate_table_name(table_name_list[counter]), FORMAT('Table name "%s" does not exists!', table_name_list[counter]);
+		EXECUTE FORMAT(
+		'
+			DROP TRIGGER IF EXISTS t_%s_%s ON %s;
 
-		CREATE CONSTRAINT TRIGGER t_%s_%s
-		%s %s
-		ON %s
-		%s %s
-		FOR EACH ROW
-		EXECUTE PROCEDURE t_%s()
-	',
-		trg_name, tbl_name, tbl_name, 
-		trg_name, tbl_name,
-		when_arg, event_arg,
-		tbl_name,
-		defer_arg, timing_arg,
-		trg_name
-	);
-
+			CREATE CONSTRAINT TRIGGER t_%s_%s
+			%s %s
+			ON %s
+			%s %s
+			FOR EACH ROW
+			EXECUTE PROCEDURE t_%s()
+		',
+			trg_name, table_name_list[counter], table_name_list[counter], 
+			trg_name, table_name_list[counter],
+			when_arg, event_arg,
+			table_name_list[counter],
+			defer_arg, timing_arg,
+			trg_name
+		);
+	END LOOP;
 	RETURN TRUE;
 END
-$BODY$ 
-LANGUAGE PLPGSQL;
+$BODY$;

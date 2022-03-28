@@ -10,6 +10,6 @@ WHERE d.name = ''Domainer'' AND c.age < 21
 'INSERT OR UPDATE',
 'DEFERRABLE',
 'INITIALLY DEFERRED',
-'customers',
+'customers, downloads',
 'An underaged customer cannot download Domainer'
 );
