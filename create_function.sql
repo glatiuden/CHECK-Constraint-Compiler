@@ -1,9 +1,41 @@
--- DROP FUNCTION IF EXISTS func_test(text, text, text, text);
+-- DROP FUNCTION IF EXISTS public.add_constraint(text, text, text, text);
+-- DROP FUNCTION IF EXISTS public.validate_query(text);
+-- DROP FUNCTION IF EXISTS public.validate_table_name(text);
 
-CREATE OR REPLACE FUNCTION func_test(trg_name text, trg_cond text, tbl_name text, error_msg text) 
-RETURNS VOID 
+CREATE OR REPLACE FUNCTION validate_table_name(tbl_name text)
+RETURNS BOOLEAN
+AS $$
+BEGIN 
+    IF EXISTS (SELECT * 
+        FROM INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_NAME = tbl_name) THEN
+        RETURN TRUE;
+    ELSE 
+        RETURN FALSE;
+    END IF;
+END
+$$
+LANGUAGE PLPGSQL;
+
+CREATE OR REPLACE FUNCTION validate_query(query text)
+RETURNS BOOLEAN
+AS $$
+BEGIN
+	EXECUTE query;
+    RETURN TRUE;
+	EXCEPTION WHEN others THEN 
+        RETURN FALSE;
+END
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION add_constraint(trg_name text, trg_cond text, tbl_name text, error_msg text) 
+RETURNS BOOLEAN 
 AS $BODY$
 BEGIN
+	ASSERT validate_table_name(tbl_name), 'Table name does not exists!';
+    ASSERT validate_query(trg_cond), 'Invalid condition entered, make sure it is a valid SQL query!';
+
 	EXECUTE format(
 	'
 		CREATE OR REPLACE FUNCTION t_%s()
@@ -45,6 +77,7 @@ BEGIN
 		trg_name
 	);
 
+	RETURN TRUE;
 END
 $BODY$ 
 LANGUAGE PLPGSQL;

@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS customer CASCADE;
+DROP TABLE IF EXISTS customers CASCADE;
 DROP TABLE IF EXISTS downloads CASCADE;
 
 CREATE TABLE downloads (
@@ -6,7 +6,7 @@ CREATE TABLE downloads (
     name varchar
 );
 
-CREATE TABLE customer (
+CREATE TABLE customers (
 	customerid int primary key,
 	age int,
     downloadsid int,
