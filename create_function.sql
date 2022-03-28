@@ -57,10 +57,11 @@ CREATE OR REPLACE FUNCTION add_constraint(
 	LANGUAGE PLPGSQL
 AS $BODY$
 DECLARE
-	table_name_list constant text[] := regexp_split_to_array('customers, downloads', E'[,]{1}[\\s]?');
+	table_name_list constant text[] := regexp_split_to_array(NULLIF(tbl_name, ''), E'[,]{1}[\\s]?');
 BEGIN
 	ASSERT validate_exists_arg(exists_arg), FORMAT('"%s" is not a valid argument, either input "EXISTS" or "NOT EXISTS" (case insensitive)', exists_arg);
 	ASSERT validate_query(trg_cond), 'Invalid condition entered, make sure it is a valid SQL query!';
+	ASSERT (CARDINALITY(table_name_list) > 0), 'No table input detected, please input at least one existing table for the trigger to be applied to!';
 
 	EXECUTE FORMAT(
 	'
