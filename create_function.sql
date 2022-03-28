@@ -62,6 +62,9 @@ BEGIN
 	ASSERT validate_exists_arg(exists_arg), FORMAT('"%s" is not a valid argument, either input "EXISTS" or "NOT EXISTS" (case insensitive)', exists_arg);
 	ASSERT validate_query(trg_cond), 'Invalid condition entered, make sure it is a valid SQL query!';
 	ASSERT (CARDINALITY(table_name_list) > 0), 'No table input detected, please input at least one existing table for the trigger to be applied to!';
+	FOR counter IN ARRAY_LOWER(table_name_list, 1)..ARRAY_UPPER(table_name_list, 1) LOOP
+		ASSERT validate_table_name(table_name_list[counter]), FORMAT('Table name "%s" does not exists!', table_name_list[counter]);
+	END LOOP;
 
 	EXECUTE FORMAT(
 	'
@@ -84,7 +87,6 @@ BEGIN
 		
 		
 	FOR counter IN ARRAY_LOWER(table_name_list, 1)..ARRAY_UPPER(table_name_list, 1) LOOP
-		ASSERT validate_table_name(table_name_list[counter]), FORMAT('Table name "%s" does not exists!', table_name_list[counter]);
 		EXECUTE FORMAT(
 		'
 			DROP TRIGGER IF EXISTS t_%s_%s ON %s;

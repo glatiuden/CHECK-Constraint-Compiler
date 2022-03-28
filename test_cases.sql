@@ -1,3 +1,4 @@
+-- Run these one by one
 TRUNCATE customers;
 
 INSERT INTO customers(customerid, age, downloadsid) VALUES (1, 26, 1); -- valid
