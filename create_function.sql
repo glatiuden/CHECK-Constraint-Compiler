@@ -72,7 +72,7 @@ BEGIN
 		RETURNS TRIGGER 
 		AS $$
 		BEGIN
-			IF EXISTS (%s) THEN 
+			IF %s (%s) THEN 
 				RAISE EXCEPTION ''%s'';
 			END IF;
 			RETURN NULL;
@@ -81,6 +81,7 @@ BEGIN
 		LANGUAGE plpgsql;
 	',
 	trg_name,
+	exists_arg,
 	trg_cond,
 	error_msg
 	);
