@@ -8,10 +8,8 @@ Select add_constraint(
     WHERE d.name = ''Domainer'' AND c.age < 21
     ',
     'EXISTS',
-    'AFTER',
     'INSERT OR UPDATE',
-    'DEFERRABLE',
-    'INITIALLY DEFERRED',
+    'DEFERRABLE INITIALLY DEFERRED',
     'customers, downloads',
     'An underaged customer cannot download Domainer'
 );
@@ -27,10 +25,8 @@ Select add_constraint(
     WHERE d.name = ''Domainer'' AND c.age < ABC
     ',
     'EXISTS',
-    'AFTER',
     'INSERT OR UPDATE',
-    'DEFERRABLE',
-    'INITIALLY DEFERRED',
+    'DEFERRABLE INITIALLY DEFERRED',
     'customers, downloads',
     'An underaged customer cannot download Domainer'
 );
@@ -45,16 +41,14 @@ Select add_constraint(
     WHERE d.name = ''Domainer'' AND c.age < 21
     ',
     'HAS',
-    'AFTER',
     'INSERT OR UPDATE',
-    'DEFERRABLE',
-    'INITIALLY DEFERRED',
+    'DEFERRABLE INITIALLY DEFERRED',
     'customers, downloads',
     'An underaged customer cannot download Domainer'
 );
 
--- INVALID: WHEN syntax, only [BEFORE | AFTER | INSTEAD OF] (case insensitive)
--- EXPECTED RESULT: PSQL default error message
+-- INVALID: DEFER syntax, only [DEFERRABLE | NOT DEFERRABLE] [INITIALLY IMMEDIATE | INITIALLY DEFERRED] (case insensitive)
+-- EXPECTED RESULT: syntax error at or near "DEFERRABLE"
 Select add_constraint(
     'r21',
     '
@@ -63,46 +57,8 @@ Select add_constraint(
     WHERE d.name = ''Domainer'' AND c.age < 21
     ',
     'EXISTS',
-    'IN BETWEEN',
     'INSERT OR UPDATE',
-    'DEFERRABLE',
-    'INITIALLY DEFERRED',
-    'customers, downloads',
-    'An underaged customer cannot download Domainer'
-);
-
--- INVALID: DEFER syntax, only [DEFERRABLE | NOT DEFERRABLE] (case insensitive)
--- EXPECTED RESULT: PSQL default error message
-Select add_constraint(
-    'r21',
-    '
-    SELECT c.customerid
-    FROM customers c NATURAL JOIN downloads d
-    WHERE d.name = ''Domainer'' AND c.age < 21
-    ',
-    'EXISTS',
-    'AFTER',
-    'INSERT OR UPDATE',
-    'DELAYABLE',
-    'INITIALLY DEFERRED',
-    'customers, downloads',
-    'An underaged customer cannot download Domainer'
-);
-
--- INVALID: TIMING syntax, only [INITIALLY IMMEDIATE | INITIALLY DEFERRED] (case insensitive)
--- EXPECTED RESULT: PSQL default error message
-Select add_constraint(
-    'r21',
-    '
-    SELECT c.customerid
-    FROM customers c NATURAL JOIN downloads d
-    WHERE d.name = ''Domainer'' AND c.age < 21
-    ',
-    'EXISTS',
-    'AFTER',
-    'INSERT OR UPDATE',
-    'DEFERRABLE',
-    'INITIALLY DELAYED',
+    'DEFERRABLE INITIALLY DEFERRABLE',
     'customers, downloads',
     'An underaged customer cannot download Domainer'
 );
@@ -117,10 +73,8 @@ Select add_constraint(
     WHERE d.name = ''Domainer'' AND c.age < 21
     ',
     'EXISTS',
-    'AFTER',
     'INSERT OR UPDATE',
-    'DEFERRABLE',
-    'INITIALLY DEFERRED',
+    'DEFERRABLE INITIALLY DEFERRED',
     '',
     'An underaged customer cannot download Domainer'
 );
@@ -135,10 +89,8 @@ Select add_constraint(
     WHERE d.name = ''Domainer'' AND c.age < 21
     ',
     'EXISTS',
-    'AFTER',
     'INSERT OR UPDATE',
-    'DEFERRABLE',
-    'INITIALLY DEFERRED',
+    'DEFERRABLE INITIALLY DEFERRED',
     'customers, downloadsssss',
     'An underaged customer cannot download Domainer'
 );

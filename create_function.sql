@@ -1,4 +1,5 @@
--- DROP FUNCTION IF EXISTS public.add_constraint(text, text, text, text, text, text, text, text, text);
+-- DROP FUNCTION IF EXISTS public.add_constraint(text, text, text, text, text, text, text);
+-- DROP FUNCTION IF EXISTS public.add_constraint(text, text, text, text, text, text);
 -- DROP FUNCTION IF EXISTS validate_query(text);
 -- DROP FUNCTION IF EXISTS validate_table_name(text);
 -- DROP FUNCTION IF EXISTS validate_exists_arg(text);
@@ -47,9 +48,7 @@ CREATE OR REPLACE FUNCTION add_constraint(
 	trg_name text, 
 	trg_cond text, 
 	exists_arg text,
-	when_arg text,
 	event_arg text,
-	defer_arg text,
 	timing_arg text,
 	tbl_name text, 
 	error_msg text) 
@@ -93,20 +92,35 @@ BEGIN
 			DROP TRIGGER IF EXISTS t_%s_%s ON %s;
 
 			CREATE CONSTRAINT TRIGGER t_%s_%s
-			%s %s
+			AFTER %s
 			ON %s
-			%s %s
+			%s
 			FOR EACH ROW
 			EXECUTE PROCEDURE t_%s()
 		',
 			trg_name, table_name_list[counter], table_name_list[counter], 
 			trg_name, table_name_list[counter],
-			when_arg, event_arg,
+			event_arg,
 			table_name_list[counter],
-			defer_arg, timing_arg,
+			timing_arg,
 			trg_name
 		);
 	END LOOP;
 	RETURN TRUE;
+END
+$BODY$;
+
+CREATE OR REPLACE FUNCTION add_constraint(
+	trg_name text, 
+	trg_cond text, 
+	exists_arg text,
+	event_arg text,
+	tbl_name text, 
+	error_msg text) 
+	RETURNS BOOLEAN 
+	LANGUAGE PLPGSQL
+AS $BODY$
+BEGIN
+	RETURN add_constraint(trg_name, trg_cond, exists_arg, event_arg, 'NOT DEFERRABLE', tbl_name, error_msg);
 END
 $BODY$;
