@@ -1,5 +1,3 @@
-# CS4221 CS5421 Research & Development Project by Team 30
-
 ## Instructions
 ### Contents
 Our main program, CHECK Constraint Compiler can be found in `create_function.sql`.
